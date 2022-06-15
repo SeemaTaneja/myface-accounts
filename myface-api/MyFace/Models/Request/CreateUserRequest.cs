@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+
+
 namespace MyFace.Models.Request
 {
     public class CreateUserRequest
@@ -19,6 +21,10 @@ namespace MyFace.Models.Request
         [Required]
         [StringLength(70)]
         public string Username { get; set; }
+        
+
+
+
         
         public string ProfileImageUrl { get; set; }
         
