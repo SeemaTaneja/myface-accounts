@@ -70,11 +70,15 @@ export async function fetchPostsDislikedBy(page: number, pageSize: number, userI
     return await response.json();
 }
 
-export async function createPost(newPost: NewPost) {
+export async function createPost(newPost: NewPost, username : string, password : string) {
+    const userDetails = `${username}:${password}`;
+    const encodedDetails = btoa(userDetails);
+    const authHeader = `Basic ${encodedDetails};`
     const response = await fetch(`https://localhost:5001/posts/create`, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization" : authHeader
         },
         body: JSON.stringify(newPost),
     });
