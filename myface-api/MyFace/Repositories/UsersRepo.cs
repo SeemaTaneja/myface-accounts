@@ -2,6 +2,8 @@
 using System.Linq;
 using MyFace.Models.Database;
 using MyFace.Models.Request;
+using System;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace MyFace.Repositories
 {
@@ -12,6 +14,8 @@ namespace MyFace.Repositories
         User GetById(int id);
         User Create(CreateUserRequest newUser);
         User Update(int id, UpdateUserRequest update);
+        User GetUserByName(string username);
+        bool CheckUsernameAndPassword(string username, string password);
         void Delete(int id);
     }
     
@@ -95,6 +99,28 @@ namespace MyFace.Repositories
             var user = GetById(id);
             _context.Users.Remove(user);
             _context.SaveChanges();
+        }
+
+        public User GetUserByName(string username)
+        {
+            return _context.Users
+                .Single(user => user.Username == username);
+        }
+        public bool CheckUsernameAndPassword(string username, string password) {
+            var user = GetUserByName(username);
+            var salt = user.Salt;
+
+            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: password,
+            salt: salt,
+            prf: KeyDerivationPrf.HMACSHA256,
+            iterationCount: 100000,
+            numBytesRequested: 256 / 8));
+
+            if (hashed == user.HashedPassword) {
+                return true;
+            }
+            return false;
         }
     }
 }

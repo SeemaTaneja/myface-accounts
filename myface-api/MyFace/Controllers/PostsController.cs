@@ -2,20 +2,23 @@
 using MyFace.Models.Request;
 using MyFace.Models.Response;
 using MyFace.Repositories;
+using System;
 
 namespace MyFace.Controllers
 {
     [ApiController]
     [Route("/posts")]
     public class PostsController : ControllerBase
-    {    
+    {
         private readonly IPostsRepo _posts;
+        private readonly IUsersRepo _users;
 
-        public PostsController(IPostsRepo posts)
+        public PostsController(IPostsRepo posts, IUsersRepo users)
         {
             _posts = posts;
+            _users = users;
         }
-        
+
         [HttpGet("")]
         public ActionResult<PostListResponse> Search([FromQuery] PostSearchRequest searchRequest)
         {
@@ -32,13 +35,35 @@ namespace MyFace.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] CreatePostRequest newPost)
+        public IActionResult Create([FromHeader] string Authorization, [FromBody] CreatePostRequest newPost)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            string username;
+            string password;
+            try
+            {
+                // check username and password
+                string[] splitHeader = Authorization.Split(" ");
+                string base64EncodedUsernameAndPassword = splitHeader[1];
+                byte[] usernameAndPasswordBytes = Convert.FromBase64String(base64EncodedUsernameAndPassword);
+                string usernameAndPassword = System.Text.Encoding.UTF8.GetString(usernameAndPasswordBytes);
+                string[] splitUsernameAndPassword = usernameAndPassword.Split(":");
+                username = splitUsernameAndPassword[0];
+                password = splitUsernameAndPassword[1];
+            }
+            catch (Exception e)
+            {
+                return Unauthorized("You did not pass authorization");
+            }
             
+            if (!_users.CheckUsernameAndPassword(username, password))
+            {
+                return Unauthorized("Username and password combination is not valid");
+            }
+
             var post = _posts.Create(newPost);
 
             var url = Url.Action("GetById", new { id = post.Id });
@@ -53,7 +78,6 @@ namespace MyFace.Controllers
             {
                 return BadRequest(ModelState);
             }
-
             var post = _posts.Update(id, update);
             return new PostResponse(post);
         }
