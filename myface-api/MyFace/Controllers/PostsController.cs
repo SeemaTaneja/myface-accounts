@@ -58,12 +58,15 @@ namespace MyFace.Controllers
             {
                 return Unauthorized("You did not pass authorization");
             }
-            
-            if (!_users.CheckUsernameAndPassword(username, password))
+            if (_users.GetUserByCredentials(username, password)== null)
             {
                 return Unauthorized("Username and password combination is not valid");
             }
-
+            var authenticatedUser = _users.GetUserByCredentials(username , password);
+            if (authenticatedUser.Id != newPost.UserId)
+            {
+                return Unauthorized("Cannot create a post for different user");
+            }
             var post = _posts.Create(newPost);
 
             var url = Url.Action("GetById", new { id = post.Id });

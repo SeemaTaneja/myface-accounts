@@ -14,11 +14,10 @@ namespace MyFace.Repositories
         User GetById(int id);
         User Create(CreateUserRequest newUser);
         User Update(int id, UpdateUserRequest update);
-        User GetUserByName(string username);
-        bool CheckUsernameAndPassword(string username, string password);
+        User GetUserByCredentials(string username, string password);
         void Delete(int id);
     }
-    
+
     public class UsersRepo : IUsersRepo
     {
         private readonly MyFaceDbContext _context;
@@ -27,11 +26,11 @@ namespace MyFace.Repositories
         {
             _context = context;
         }
-        
+
         public IEnumerable<User> Search(UserSearchRequest search)
         {
             return _context.Users
-                .Where(p => search.Search == null || 
+                .Where(p => search.Search == null ||
                             (
                                 p.FirstName.ToLower().Contains(search.Search) ||
                                 p.LastName.ToLower().Contains(search.Search) ||
@@ -46,7 +45,7 @@ namespace MyFace.Repositories
         public int Count(UserSearchRequest search)
         {
             return _context.Users
-                .Count(p => search.Search == null || 
+                .Count(p => search.Search == null ||
                             (
                                 p.FirstName.ToLower().Contains(search.Search) ||
                                 p.LastName.ToLower().Contains(search.Search) ||
@@ -101,13 +100,16 @@ namespace MyFace.Repositories
             _context.SaveChanges();
         }
 
-        public User GetUserByName(string username)
+        public User GetUserByCredentials(string username, string password)
         {
-            return _context.Users
-                .Single(user => user.Username == username);
-        }
-        public bool CheckUsernameAndPassword(string username, string password) {
-            var user = GetUserByName(username);
+            var user = _context
+                    .Users
+                    .Where(u => u.Username == username)
+                    .SingleOrDefault();
+            if(user == null)
+            {
+                return null;
+            }
             var salt = user.Salt;
 
             string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -117,10 +119,11 @@ namespace MyFace.Repositories
             iterationCount: 100000,
             numBytesRequested: 256 / 8));
 
-            if (hashed == user.HashedPassword) {
-                return true;
+            if (hashed == user.HashedPassword)
+            {
+                return user;
             }
-            return false;
+            return null;
         }
     }
 }
