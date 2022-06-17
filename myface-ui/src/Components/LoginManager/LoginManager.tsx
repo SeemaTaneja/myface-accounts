@@ -45,7 +45,7 @@ export function LoginManager(props: LoginManagerProps): JSX.Element {
     username: username,
     setUsername: setUsername,
     password: password,
-    setPassword: setPassword,
+    setPassword:  setPassword,
   };
 
   return (

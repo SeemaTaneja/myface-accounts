@@ -58,6 +58,7 @@ export function CreatePost(): JSX.Element {
         <Page containerClassName="create-post-page">
             <h1 className="title">Create Post</h1>
             <CreatePostForm/>
+            
         </Page>
     );
 }
